@@ -1,0 +1,357 @@
+---
+title: "DWVAssignment6Swiston"
+author: "Bryn Swiston"
+format:
+  html: default
+  pdf: default
+  docx: default
+---
+```{r}
+#Open the library and have it read in the data set. Make sure ggplot is activated
+library(haven)
+library(tidyverse)
+mydata <- read_dta("/Users/brynswiston/Documents/Data Wrangling Library/Week 6 Homework Files/GSS 1972-2024 Cumulative/gss7224_r1.dta")
+```
+```{r}
+library (ggplot2)
+```
+
+```{r}
+#Separate out the 15 variables of interest, and then turn them into a distinct data set
+my_15_vars <- c("year", "spkath", "colath", "libath", "spkrac", "colrac", "librac", "spkcom", "colcom", "libcom", "spkmil", "colmil", "libmil", "spkhomo", "colhomo", "libhomo")
+```
+```{r}
+filtered_data <- mydata[, my_15_vars]
+```
+
+```{r}
+#Filter the data by years of interest
+new_filtered_data <- filtered_data |> filter(year %in% 1976:1998)
+```
+
+```{r}
+#Check to make sure data was filtered correctly
+table(new_filtered_data$spkath)
+table(new_filtered_data$colath)
+table(new_filtered_data$libath)
+```
+
+
+```{r}
+#Recode the new filtered data as either tolerant or intolerant 
+new_filtered_data <- new_filtered_data |>
+  mutate(
+ 
+    spkath_r  = case_when(spkath  == 2 ~ 1, spkath  == 1 ~ 0),
+    spkrac_r  = case_when(spkrac  == 2 ~ 1, spkrac  == 1 ~ 0),
+    spkcom_r  = case_when(spkcom  == 2 ~ 1, spkcom  == 1 ~ 0),
+    spkmil_r  = case_when(spkmil  == 2 ~ 1, spkmil  == 1 ~ 0),
+    spkhomo_r = case_when(spkhomo == 2 ~ 1, spkhomo == 1 ~ 0),
+
+    colath_r  = case_when(colath  == 5 ~ 1, colath  == 4 ~ 0),
+    colrac_r  = case_when(colrac  == 5 ~ 1, colrac  == 4 ~ 0),
+    colmil_r  = case_when(colmil  == 5 ~ 1, colmil  == 4 ~ 0),
+    colhomo_r = case_when(colhomo == 5 ~ 1, colhomo == 4 ~ 0),
+
+    colcom_r  = case_when(colcom  == 4 ~ 1, colcom  == 5 ~ 0),
+
+    libath_r  = case_when(libath  == 1 ~ 1, libath  == 2 ~ 0),
+    librac_r  = case_when(librac  == 1 ~ 1, librac  == 2 ~ 0),
+    libcom_r  = case_when(libcom  == 1 ~ 1, libcom  == 2 ~ 0),
+    libmil_r  = case_when(libmil  == 1 ~ 1, libmil  == 2 ~ 0),
+    libhomo_r = case_when(libhomo == 1 ~ 1, libhomo == 2 ~ 0)
+  )
+```
+
+```{r}
+#Regroup the recoded and filtered data by year. Create a line graph
+new_filtered_data <- new_filtered_data |>
+  mutate(intol = rowSums(across(ends_with("_r")))) |>
+  filter(!is.na(intol))
+
+yearly <- new_filtered_data |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 15)) +
+  theme_classic()
+```
+
+```{r}
+#Separate out the six variables of interest
+my_6_vars <- c("year", "spkrac", "colrac", "librac","spkhomo", "colhomo", "libhomo")
+filtered_data2<- mydata[, my_6_vars]
+```
+
+```{r}
+#Separate out racist
+my_rac_vars <- c("year", "spkrac", "colrac", "librac")
+filtered_data2rac <- mydata[, my_rac_vars]
+```
+
+```{r}
+#Separate homosexuality
+my_homo_vars <- c("year", "spkhomo", "colhomo", "libhomo")
+filtered_data2homo <- mydata[, my_homo_vars]
+```
+
+
+```{r}
+#Filter racist by year
+new_filtered_data2rac <- filtered_data2rac |> filter(year %in% 1976:1998)
+```
+
+```{r}
+#Filter homosexuality by year
+new_filtered_data2homo <- filtered_data2homo |> filter(year %in% 1976:1998)
+```
+
+```{r}
+#Recode the racist data as either tolerant or intolerant
+new_filtered_data2rac <- new_filtered_data2rac |>
+  mutate(
+ 
+    spkrac_r  = case_when(spkrac  == 2 ~ 1, spkrac  == 1 ~ 0),
+
+    colrac_r  = case_when(colrac  == 5 ~ 1, colrac  == 4 ~ 0),
+
+    librac_r  = case_when(librac  == 1 ~ 1, librac  == 2 ~ 0),
+  )
+```
+
+```{r}
+#Recode the homosexuality data as either tolerant or intolerant 
+new_filtered_data2homo <- new_filtered_data2homo |>
+  mutate(
+ 
+    spkhomo_r = case_when(spkhomo == 2 ~ 1, spkhomo == 1 ~ 0),
+
+    colhomo_r = case_when(colhomo == 5 ~ 1, colhomo == 4 ~ 0),
+
+    libhomo_r = case_when(libhomo == 1 ~ 1, libhomo == 2 ~ 0)
+  )
+```
+
+```{r}
+#Regroup the recoded and filtered racist data by year. Create a line graph
+new_filtered_data2rac <- new_filtered_data2rac |>
+  mutate(intol = rowSums(across(ends_with("rac_r")))) |>
+  filter(!is.na(intol))
+
+yearly_rac <- new_filtered_data2rac |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly_rac, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 3)) +
+  theme_classic()
+```
+
+```{r}
+##Regroup the recoded and filtered homosexuality data by year. Create a line graph
+new_filtered_data2homo <- new_filtered_data2homo |>
+  mutate(intol = rowSums(across(ends_with("homo_r")))) |>
+  filter(!is.na(intol))
+
+yearly_homo <- new_filtered_data2homo |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly_homo, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 3)) +
+  theme_classic()
+```
+
+```{r}
+#Create a graph that combines the two
+ggplot() +
+  geom_line(data = yearly_rac,  aes(x = year, y = mean_intol), color = "blue") +
+  geom_line(data = yearly_homo, aes(x = year, y = mean_intol), color = "red") +
+  scale_y_continuous(limits = c(0, 3)) +
+  labs(x = NULL, y = "Mean intolerance (0-3)") +
+  theme_classic()
+```
+
+```{r}
+#Create a graph that groups by year and shows the proportion of tolerance versus intolerance using previous data recoding
+yearly5 <- new_filtered_data |>
+  mutate(intolerant = if_else(intol > 0, 1, 0)) |>
+  group_by(year) |>
+  summarise(prop_intol = mean(intolerant))
+
+ggplot(yearly5, aes(x = year, y = prop_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = NULL, y = "Proportion Intolerant") +
+  theme_classic()
+```
+
+```{r}
+#Recode all filtered data as either tolerant or intolerant 
+filtered_data <- filtered_data |>
+  mutate(
+ 
+    spkath_r  = case_when(spkath  == 2 ~ 1, spkath  == 1 ~ 0),
+    spkrac_r  = case_when(spkrac  == 2 ~ 1, spkrac  == 1 ~ 0),
+    spkcom_r  = case_when(spkcom  == 2 ~ 1, spkcom  == 1 ~ 0),
+    spkmil_r  = case_when(spkmil  == 2 ~ 1, spkmil  == 1 ~ 0),
+    spkhomo_r = case_when(spkhomo == 2 ~ 1, spkhomo == 1 ~ 0),
+
+    colath_r  = case_when(colath  == 5 ~ 1, colath  == 4 ~ 0),
+    colrac_r  = case_when(colrac  == 5 ~ 1, colrac  == 4 ~ 0),
+    colmil_r  = case_when(colmil  == 5 ~ 1, colmil  == 4 ~ 0),
+    colhomo_r = case_when(colhomo == 5 ~ 1, colhomo == 4 ~ 0),
+
+    colcom_r  = case_when(colcom  == 4 ~ 1, colcom  == 5 ~ 0),
+
+    libath_r  = case_when(libath  == 1 ~ 1, libath  == 2 ~ 0),
+    librac_r  = case_when(librac  == 1 ~ 1, librac  == 2 ~ 0),
+    libcom_r  = case_when(libcom  == 1 ~ 1, libcom  == 2 ~ 0),
+    libmil_r  = case_when(libmil  == 1 ~ 1, libmil  == 2 ~ 0),
+    libhomo_r = case_when(libhomo == 1 ~ 1, libhomo == 2 ~ 0)
+  )
+```
+
+```{r}
+#Group by year and create a graph without year filtering
+filtered_data <- filtered_data |>
+  mutate(intol = rowSums(across(ends_with("_r")))) |>
+  filter(!is.na(intol))
+
+yearly <- filtered_data |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 15)) +
+  theme_classic()
+```
+
+```{r}
+#Recode all racist filtered data as either tolerant or intolerant 
+filtered_data2rac <- filtered_data2rac |>
+  mutate(
+ 
+    spkrac_r  = case_when(spkrac  == 2 ~ 1, spkrac  == 1 ~ 0),
+
+    colrac_r  = case_when(colrac  == 5 ~ 1, colrac  == 4 ~ 0),
+
+    librac_r  = case_when(librac  == 1 ~ 1, librac  == 2 ~ 0),
+  )
+```
+
+```{r}
+#Recode all homosexuality filtered data as either tolerant or intolerant 
+filtered_data2homo <- filtered_data2homo |>
+  mutate(
+ 
+    spkhomo_r = case_when(spkhomo == 2 ~ 1, spkhomo == 1 ~ 0),
+
+    colhomo_r = case_when(colhomo == 5 ~ 1, colhomo == 4 ~ 0),
+
+    libhomo_r = case_when(libhomo == 1 ~ 1, libhomo == 2 ~ 0)
+  )
+```
+
+```{r}
+#Create the same racist line graph as above but without filtering for year and using all filtered data
+filtered_data2rac <- filtered_data2rac |>
+  mutate(intol = rowSums(across(ends_with("rac_r")))) |>
+  filter(!is.na(intol))
+
+yearly_rac <- filtered_data2rac |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly_rac, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 3)) +
+  theme_classic()
+```
+
+```{r}
+#Create the same homosexuality line graph as above but without filtering for year and using all filtered data
+filtered_data2homo <- filtered_data2homo |>
+  mutate(intol = rowSums(across(ends_with("homo_r")))) |>
+  filter(!is.na(intol))
+
+yearly_homo <- filtered_data2homo |>
+  group_by(year) |>
+  summarise(mean_intol = mean(intol))
+
+ggplot(yearly_homo, aes(x = year, y = mean_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 3)) +
+  theme_classic()
+```
+
+```{r}
+#Create a graph that combines the two
+ggplot() +
+  geom_line(data = yearly_rac,  aes(x = year, y = mean_intol), color = "blue") +
+  geom_line(data = yearly_homo, aes(x = year, y = mean_intol), color = "red") +
+  scale_y_continuous(limits = c(0, 3)) +
+  labs(x = NULL, y = "Mean intolerance (0-3)") +
+  theme_classic()
+```
+
+```{r}
+#Create a proportion intolerance graph, but with all filtered data
+yearly5 <- filtered_data |>
+  mutate(intolerant = if_else(intol > 0, 1, 0)) |>
+  group_by(year) |>
+  summarise(prop_intol = mean(intolerant))
+
+ggplot(yearly5, aes(x = year, y = prop_intol)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = NULL, y = "Proportion Intolerant") +
+  theme_classic()
+```
+```{r}
+#Set aside new variables and make them into a new data set
+compelvars <- c("year", "helpfulv", "trustv")
+compelfiltereddata <- mydata[, compelvars]
+```
+
+```{r}
+#Account for NA answers
+compelfiltereddata <- compelfiltereddata |>
+  mutate(
+    helpfulv_f = as_factor(helpfulv),                            
+    helpfulv_f = fct_na_value_to_level(helpfulv_f, level = "NA")
+  )
+```
+
+```{r}
+#Recode and create a line graph showing the proportion of people who identify as helpful or trustworthy over the years
+compel <- compelfiltereddata |>
+  mutate(
+    helpful_r = case_when(helpfulv == 1 ~ 1,
+                          helpfulv %in% 2:3 ~ 0),     
+    trust_r   = case_when(trustv == 1 ~ 1,            
+                          trustv %in% 2:3 ~ 0)    
+  )
+
+yearly_compel <- compel |>
+  group_by(year) |>
+  summarise(
+    Helpful = mean(helpful_r, na.rm = TRUE),
+    Trust   = mean(trust_r,   na.rm = TRUE)
+  ) |>
+  pivot_longer(-year, names_to = "measure", values_to = "proportion") |>
+  filter(!is.nan(proportion))     
+
+ggplot(yearly_compel, aes(x = year, y = proportion, linetype = measure)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, .5)) +
+  labs(x = NULL, y = "Proportion", linetype = NULL) +
+  theme_classic()
+```
+
+
